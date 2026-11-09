@@ -1,13 +1,115 @@
 \documentclass{article}
+\usepackage{longtable,array}
 
-\title{My Paper}
-\author{Your Name}
-\date{\today}
+\usepackage[margin=0.65in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+\title{Vol. 3 Final Project}
+\author{Heidi Turley, Austin Child, Brendan Wagner, Kerby Liao, Sam Esplin}
+\date{December 2026}
 
 \begin{document}
+
 \maketitle
 
-\section{Introduction}
-This is where the paper begins.
+\section{Research Questions}
+
+Our goal is to determine the optimal passing strategy for a Formula 1 race
+at a specific circuit. We will examine situations in which one driver is
+trying to pass the car directly ahead and identify factors that may indicate
+whether a pass will succeed.
+
+\begin{enumerate}[itemsep=0.25em]
+    \item Where on the circuit do passes most often occur?
+    \item How do gap and closing speed relate to the likelihood of a pass?
+    \item Do tire compound and tire age for the following and leading cars
+          relate to pass probability?
+    \item How does DRS use relate to pass probability in seasons when DRS
+          data is available? (This may be out of scope.)
+\end{enumerate}
+
+\section{Data Source}
+Our dataset will come from FastF1. They have tons of data which is great. All necessary data is available to answer our questions, however the greater difficulty will be in ensuring our answers are significant and unbiased. We will need to control for weather, race season, vehicle differences, etc. Below are each of the proposed attributes for determining the probability of a successful pass and how they will be built.
+
+\begin{longtable}{|p{0.15\textwidth}|p{0.30\textwidth}|p{0.47\textwidth}|}
+\hline
+\textbf{Attribute} & \textbf{Available FastF1 data} & \textbf{How the attribute will be built} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Attribute} & \textbf{Available FastF1 data} & \textbf{How the attribute will be built} \\
+\hline
+\endhead
+
+Track location &
+\texttt{Distance}, \texttt{RelativeDistance}, \texttt{X}, \texttt{Y};
+circuit corner and track markers &
+Use \texttt{Distance} or \texttt{RelativeDistance} or \texttt{X, Y} to determine where in the track they are. We are not sure how we will divide up the track yet but we will determine that shortly \\ \hline
+
+Gap &
+\texttt{DistanceToDriverAhead}, \texttt{DriverAhead} &
+Use \texttt{DistanceToDriverAhead} as the following car's gap to the car in front. \\ \hline
+
+Closing speed &
+Time-indexed \texttt{DistanceToDriverAhead} &
+For consecutive observations with the same target, calculate the closing gap by either the distance over the change in time, or maybe the following cars speed minus the lead car. \\ \hline
+
+Tire state &
+\texttt{Compound}, \texttt{TyreLife}, \texttt{FreshTyre}, \texttt{Stint} &
+Represent each car's tire state using compound, laps on the tire, whether it is fresh, and stint number. \\ \hline
+
+DRS &
+\texttt{DRS} &
+Use the telemetry DRS value as a time based state for the following car. Potentially divide this into DRS active and DRS available. \\ \hline
+
+Weather &
+\texttt{AirTemp}, \texttt{TrackTemp}, \texttt{Humidity}, \texttt{Pressure}, \texttt{Rainfall}, \texttt{WindDirection}, \texttt{WindSpeed}, \texttt{Time} &
+We will need to normalize by weather across races and passing attemts. Not sure how this will work but we will figure it out. \\ \hline
+
+Race context &
+\texttt{LapNumber}, \texttt{Position}, \texttt{GridPosition}, \texttt{PitInTime}, \texttt{PitOutTime}, \texttt{Stint}, \texttt{TrackStatus}; race-control messages &
+We will use this to exclude certain passing attempts based on the flags during the race or other incidents \\ \hline
+
+\end{longtable}
+
+\section{Techniques}
+Various techniques will be used from both Volume 3 and Volume 4. Here are a few that we think will be most helpful.
+
+\begin{enumerate}[itemsep=0.25em]
+    \item Clustering: This will probably be the biggest method used as we will cluster attribute combinations into successful and unsuccessful pass attempts. 
+    \item Regression: This will likely be used to normalize pass attempts based on weather inputs. 
+    \item HMM's: Much of this data is time series data so using some sort of markov chain could be helpful. We are not sure exactly how we will do this but it could work well.
+    
+\end{enumerate}
+
+\section{Rough Project Outline}
+
+\begin{enumerate}[itemsep=0.25em]
+    \item Pull or data from FastF1 
+    \item Check for data quality and clean up our data
+    \item Engineer necessary attributes
+    \item Begin exploring pass patterns and run clustering algorithms
+    \item Fit regression and classification baselines
+    \item Interpret results and conclude project
+    
+\end{enumerate}
+
+\section{Metrics}
+Measuring the probability of a pass will likely be relatively easy. A pass is either successful or not. To determine which attributes contribute most to a successful pass we will begin with a train/test split and compare our accuracy of our built model to our test case accuracy. We can do a K-fold split to improve this result. When doing our regression to normalize for weather we can use MAE and RMSE.
+
+\section{Group Work}
+We are still working through exactly what this will look like. Everybody will participate in writing portions of the report, writing the code, and developing the presentation. Here is a potential breakdown of roles:
+\begin{enumerate}[itemsep=0.25em]
+    \item Kerby: 
+    \item Austin: Write project proposal, help in data cleanup and attribute engineering, help make final presentation
+    \item Brendan:
+    \item Heidi: 
+    \item Sam:
+    
+    
+\end{enumerate}
 
 \end{document}
