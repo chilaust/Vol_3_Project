@@ -1,0 +1,15 @@
+# Ignore all Parquet dataset files anywhere in the repo
+*.parquet
+
+# Ignore the FastF1 raw download cache
+fastf1_cache/
+
+# Ignore the local Python virtual environment and bytecode
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Ignore OS clutter
+.DS_Store
+Thumbs.db
