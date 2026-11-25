@@ -61,6 +61,11 @@ def main() -> None:
     parser.add_argument("--session-type", default="Race", help="Session type (default: Race)")
     parser.add_argument("--session-name", default="Race", help="Session name (default: Race; excludes Sprint)")
     parser.add_argument("--output", default="outputs", help="Output directory")
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Download every endpoint again and replace existing Parquet files",
+    )
     args = parser.parse_args()
 
     sessions = get_rows(
@@ -91,32 +96,40 @@ def main() -> None:
         "race_control", "overtakes", "pit", "session_result",
     ):
         destination = folder / f"{endpoint}.parquet"
-        if destination.exists():
+        if destination.exists() and not args.refresh:
             print(f"Keeping existing {destination.name}")
             continue
         rows = get_rows(endpoint, {"session_key": session_key})
         save_table(rows, destination)
-        time.sleep(0.15)
+        time.sleep(0.4)
 
     # Telemetry endpoints are large, so request each driver's stream separately.
     drivers = get_rows("drivers", {"session_key": session_key})
     driver_numbers = sorted({row["driver_number"] for row in drivers})
     for endpoint in ("car_data", "location"):
         destination = folder / f"{endpoint}.parquet"
-        if destination.exists():
+        if destination.exists() and not args.refresh:
             print(f"Keeping existing {destination.name}")
             continue
         rows = []
         for index, number in enumerate(driver_numbers, start=1):
             print(f"Downloading {endpoint}: driver {number} ({index}/{len(driver_numbers)})")
             rows.extend(get_rows(endpoint, {"session_key": session_key, "driver_number": number}))
-            time.sleep(0.1)
+            time.sleep(0.4)
         save_table(rows, destination)
 
+    mode_note = (
+        "2026 mode coverage: OpenF1 car_data includes the legacy drs field, which is "
+        "null for this session. Its documented car_data fields do not include per-car "
+        "Active Aero mode, Overtake eligibility, or Overtake Mode activation. The "
+        "race_control table does include track-wide OVERTAKE ENABLED/DISABLED messages; "
+        "these describe system availability, not an individual driver's activation.\n"
+    )
     (folder / "README.txt").write_text(
         "Raw OpenF1 session export. Each Parquet file corresponds to a source endpoint.\n"
         "No pairwise gaps, normalized track positions, passing labels, or other project features were added.\n"
-        f"Season: {args.year}\nCircuit: {session.get('circuit_short_name')}\n"
+        + mode_note
+        + f"Season: {args.year}\nCircuit: {session.get('circuit_short_name')}\n"
         f"Session type: {args.session_type}\nSession key: {session_key}\n",
         encoding="utf-8",
     )
